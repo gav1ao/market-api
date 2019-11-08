@@ -1,0 +1,21 @@
+
+const express = require('express');
+
+const routes = express.Router();
+
+const InvoiceController = require('./controllers/InvoiceController');
+const ProductController = require('./controllers/ProductController');
+
+routes.get('/invoice/code/', InvoiceController.requestAccess);
+routes.post('/invoice/code/', InvoiceController.getResultPage);
+routes.post('/invoice/qrcode/', InvoiceController.getResultWithQRCode);
+routes.get('/teste', InvoiceController.teste);
+
+routes.get('/product/', ProductController.index);
+routes.post('/product/', ProductController.getProductsByName);
+
+/*routes.post('/devs', DevController.store);
+routes.post('/devs/:devId/likes', LikeController.store);
+routes.post('/devs/:devId/dislikes', DislikeController.store);*/
+
+module.exports = routes;
