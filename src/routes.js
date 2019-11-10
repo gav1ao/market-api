@@ -11,6 +11,10 @@ routes.post('/invoice/code/', InvoiceController.getResultPage);
 routes.post('/invoice/qrcode/', InvoiceController.getResultWithQRCode);
 routes.get('/teste', InvoiceController.teste);
 
+routes.get('/admin/browser/open', InvoiceController.openBrowser);
+routes.get('/admin/browser/close', InvoiceController.closeBrowser);
+routes.get('/admin/browser/status', InvoiceController.getBrowserStatus);
+
 routes.get('/product/', ProductController.index);
 routes.post('/product/', ProductController.getProductsByName);
 

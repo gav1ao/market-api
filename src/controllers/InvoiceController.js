@@ -4,6 +4,10 @@ const invoiceInfo = require('../services/invoiceInfoRequest');
 
 let globalBrowser, userPage;
 
+const openGlobalBrowser = async () => {
+    globalBrowser = await puppeteer.launch({headless: true});
+}
+
 module.exports = {
     async index(req, res) {
 
@@ -82,5 +86,70 @@ module.exports = {
         
 
         return res.json(response);
+    },
+
+    async openBrowser(req, res) {
+        if (globalBrowser) {
+            return res.status(400).send({"error": "Browser is already opened."});
+        }
+
+        try {
+            await openGlobalBrowser();
+
+            return res.status(200).send({"info": "Browser opened with success."});
+
+        } catch(ex) {
+            // TODO: Utilizar ferramenta para coleta de erros
+            console.error(ex);
+
+            return res.status(500).send({
+                "error": "There was a problem when tried to open the browser."
+            });
+        }
+
+    },
+
+    async closeBrowser(req, res) {
+        if (!globalBrowser) {
+            return res.status(400).send({"error": "Browser is already closed or unavailable."});
+        }
+
+        try {
+            globalBrowser.close();
+            globalBrowser = undefined;
+
+            return res.status(200).send({"info": "Browser closed with success."});
+
+        } catch (ex) {
+            // TODO: Utilizar ferramenta para coleta de erros
+            console.error(ex);
+
+            return res.status(500).send({
+                "error": "There was a problem when tried to close the browser."
+            });
+        }
+    },
+
+    async getBrowserStatus(req, res) {
+
+        if (!globalBrowser) {
+            return res.status(400).send({ "error": "Browser not available."});
+        }
+
+        try {
+            const browserStatus = await globalBrowser.pages();
+
+            return res.send({
+                "pagesOpened" : browserStatus.length,
+            });
+
+        } catch (ex) {
+            // TODO: Utilizar ferramenta para coleta de erros
+            console.error(ex);
+
+            return res.status(500).send({
+                "error": "There was a problem when tried to get the status."
+            });
+        }
     }
 };
