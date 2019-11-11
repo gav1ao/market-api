@@ -59,19 +59,33 @@ module.exports = {
     },
 
     async getResultWithQRCode(req, res) {
-        if (globalBrowser === undefined) {
-            globalBrowser = await puppeteer.launch({headless: false});
+        if (!globalBrowser) {
+            openGlobalBrowser();
         }
 
-        const { url } = req.headers;
+        try {
+            const { url } = req.headers;
 
-        console.log('URL: ' + url);
-        
-        userPage = await globalBrowser.newPage();
+            console.log('URL: ' + url);
+            
+            userPage = await globalBrowser.newPage();
 
-        const response = await invoiceInfo.getResultPageWithQRCode(url, userPage);
+            const response = await invoiceInfo.getResultPageWithQRCode(url, userPage);
 
-        return res.send(response);
+            if (response.error) {
+                return res.status(response.statusCode).send({ "error" : response.error});
+            }
+
+            return res.status(200).send(response);
+
+        } catch (ex) {
+            // TODO: Utilizar ferramenta para coleta de erros
+            console.error(ex);
+
+            return res.status(500).send({
+                "error": "There was a problem trying to register the requested invoice."
+            });
+        }
     },
 
     async teste(req, res) {

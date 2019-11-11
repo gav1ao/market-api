@@ -74,6 +74,8 @@ const teste = (page) => {
 
             page.setDefaultTimeout(100000);
 
+            const accessCode = '3319 0907 4731 6000 0105 6500 6000 2395 6990 0479 1386';
+
             const [response] = await Promise.all([
                 page.waitForResponse(response => response.url().includes('consultaQRCode.faces')),
                 page.goto(url)
@@ -104,16 +106,21 @@ const teste = (page) => {
 const getResultPageWithQRCode = (url, page) => {
     return new Promise( (resolve, reject) => {
         const getResult = async () => {
-            page.setDefaultTimeout(100000);
+            try {
+                page.setDefaultTimeout(100000);
 
-            const [response] = await Promise.all([
-                page.waitForResponse(response => response.url().includes('consultaQRCode.faces')),
-                page.goto(url)
-            ]);
+                const [response] = await Promise.all([
+                    page.waitForResponse(response => response.url().includes('consultaQRCode.faces')),
+                    page.goto(url)
+                ]);
 
-            const content = await response.buffer();
-            const res = parserResultPage(content);
-            return res;
+                const content = await response.buffer();
+                const res = parserResultPage(content);
+                return res;
+
+            } catch (ex) {
+                throw ex;
+            }
         }
 
         getResult().then((res) => {
@@ -127,6 +134,27 @@ const getResultPageWithQRCode = (url, page) => {
 
 const parserResultPage = async (content) => {
     const $ = cherrio.load(content);
+
+    const accessCode = $('span.chave').text().trim().split(' ').join('');
+
+    // TODO: Melhorar verificação de nota não disponível
+    // TODO: Tratar caso em que o site da Fazenda não está disponível
+    if (!accessCode) {
+        console.log(accessCode);
+        return {
+            "error" : "Invoice not found.",
+            "statusCode" : 404
+        }
+    }
+
+    const invoiceDatabase = await Invoice.findOne({ "accessCode" : accessCode});
+
+    if (invoiceDatabase) {
+        return {
+            "error" : "Invoice already registered.",
+            "statusCode" : 409
+        }
+    }
 
     const productsTable = $('table#tabResult');
     const productsWrapper = productsTable.find('tr');
@@ -156,15 +184,12 @@ const parserResultPage = async (content) => {
         productsArr.push(product);
     });
 
-
     const marketInfo = $('div#conteudo > div.txtCenter');
     const marketName = marketInfo.find('div#u20').text();
 
     const market = {
         name: marketName
     };
-
-    const accessCode = '3319 0907 4731 6000 0105 6500 6000 2395 6990 0479 1386';
 
     const invoice = await Invoice.create({
         accessCode,
@@ -187,67 +212,6 @@ const parserResultPage = async (content) => {
         });
     });
 
-    return invoice;
-}
-
-const parserResultPage_Old = async (content) => {
-    const $ = cherrio.load(content);
-
-    const productsTable = $('table#tabResult');
-    const productsWrapper = productsTable.find('tr');
-    
-    const productsId = [];
-
-    productsWrapper.map(async (i, prod) => {
-        let $prod = $(prod);
-        
-        let name = $prod.find('span.txtTit').text().trim();
-        let code = $prod.find('span.RCod').text().trim();
-        let amount = $prod.find('span.Rqtd').text().trim();
-        let price = $prod.find('span.RvlUnit').text().trim();
-
-        let product = await Product.create({
-            name,
-            code,
-            amount,
-            price,
-        });
-
-        console.log(product._id);
-
-        productsId.push(product._id);
-    });
-
-
-    const marketInfo = $('div#conteudo > div.txtCenter');
-    const marketName = marketInfo.find('div#u20').text();
-
-    const market = await Market.create({
-        name: marketName
-    });
-
-    const accessCode = '3319 0907 4731 6000 0105 6500 6000 2395 6990 0479 1386';
-
-    /*const invoice = {
-        accessCode,
-        products,
-        market,
-    }*/
-
-    console.log(productsId);
-
-    const invoice = await Invoice.create({
-        accessCode,
-        // products: productsId,
-        market: market._id,
-    });
-
-    console.log(invoice);
-    // const tmp = $('#linhaTotal > .totalNumb').text();
-
-    // console.log('Total: ' + tmp);
-
-    // return tmp;
     return invoice;
 }
 
