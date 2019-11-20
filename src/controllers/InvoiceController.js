@@ -5,7 +5,7 @@ const invoiceInfo = require('../services/invoiceInfoRequest');
 let globalBrowser, userPage;
 
 const openGlobalBrowser = async () => {
-    globalBrowser = await puppeteer.launch({headless: true});
+    globalBrowser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
 }
 
 module.exports = {
