@@ -186,9 +186,50 @@ const parserResultPage = async (content) => {
 
     const marketInfo = $('div#conteudo > div.txtCenter');
     const marketName = marketInfo.find('div#u20').text();
+    const marketTextWrapper = marketInfo.find('div.text');
+
+    let marketCNPJ = '';
+
+    let marketAddressStreet = '';
+    let marketAddressNumber = '';
+    let marketAddressLine2 = '';
+    let marketAddressNeighbourhood = '';
+    let marketAddressMunicipality = '';
+    let marketAddressState = '';
+
+    if (marketTextWrapper.length > 0) {
+        const marketCnpjWrapper = $(marketTextWrapper[0]).text().trim().split('\n').join('').split('\t').join('');
+
+
+        if (marketCnpjWrapper.includes("CNPJ")) {
+            marketCNPJ = marketCnpjWrapper.substring(5);
+        }
+
+        const marketAddressWrapper = $(marketTextWrapper[1]).text().trim().split('\n').join('').split('\t').join('');
+
+        if (marketAddressWrapper.length > 0) {
+
+            const marketAddressList = marketAddressWrapper.split(',');
+            marketAddressStreet = marketAddressList[0].trim();
+            marketAddressNumber = marketAddressList[1].trim();
+            marketAddressLine2 = marketAddressList[2].trim();
+            marketAddressNeighbourhood = marketAddressList[3].trim();
+            marketAddressMunicipality = marketAddressList[4].trim();
+            marketAddressState = marketAddressList[5].trim();
+        }
+    }
 
     const market = {
-        name: marketName
+        name: marketName,
+        cnpj: marketCNPJ,
+        address: {
+            street: marketAddressStreet,
+            number: marketAddressNumber,
+            addressLine2: marketAddressLine2,
+            neighbourhood: marketAddressNeighbourhood,
+            municipality: marketAddressMunicipality,
+            state: marketAddressState,
+        },
     };
 
     const invoice = await Invoice.create({

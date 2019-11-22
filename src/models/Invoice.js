@@ -3,7 +3,7 @@ const { Schema, model } = require('mongoose');
 const InvoiceSchema = new Schema({
     accessCode: {
         type: String,
-        // required: true,
+        required: true,
     },
     
     products: [
@@ -34,11 +34,28 @@ const InvoiceSchema = new Schema({
         },
         cnpj: {
             type: String,
-            // required: true,
         },
-        adress: {
-            type: String,
-            // required: true,
+        address: {
+            street: {
+                type: String,
+            },
+            number: {
+                type: String,
+            },
+            addressLine2: {
+                type: String,
+            },
+            neighbourhood: {
+                type: String,
+            },
+            municipality: {
+                type: String,
+                required: true,
+            },
+            state: {
+                type: String,
+                required: true,
+            },
         },
     },
 
