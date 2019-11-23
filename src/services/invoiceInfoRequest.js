@@ -1,11 +1,13 @@
 const puppeteer = require('puppeteer');
 const cherrio = require('cheerio');
+const moment = require('moment');
 
 const Invoice = require('../models/Invoice');
 const Product = require('../models/Product');
 const Market = require('../models/Market');
 
 const NUMBER_PATTERN = /(\d)+(\,)*(\d)*/;
+const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 
 const getRequestPage = async (accessCode, page) => {    
     const url = 'http://nfce.fazenda.rj.gov.br/consulta';
@@ -184,6 +186,39 @@ const parserResultPage = async (content) => {
         productsArr.push(product);
     });
 
+    let purchaseDate = new Date();
+
+    const infoDiv = $('#infos');
+
+    if (infoDiv) {
+        const infoWrapper = infoDiv.find('div');
+
+        if (infoWrapper) {
+            const infoInvoiceWrapper = $(infoWrapper[0]).find('li');
+
+            if (infoInvoiceWrapper) {
+                const purchaseDateWrapper = $(infoInvoiceWrapper[0])
+
+                if (purchaseDateWrapper) {
+                    const purchaseDateTextWrapper = purchaseDateWrapper.text();
+
+                    const INITIAL_TEXT = 'Emissão: ';
+                    const FINAL_TEXT = ' - Via Consumidor';
+
+                    const INITIAL_INDEX = purchaseDateTextWrapper.indexOf(INITIAL_TEXT) + INITIAL_TEXT.length;
+                    const FINAL_INDEX = purchaseDateTextWrapper.indexOf(FINAL_TEXT);
+
+                    const purchaseDateText = purchaseDateTextWrapper.substring(INITIAL_INDEX, FINAL_INDEX);
+
+                    if (purchaseDateText.length > 0) {
+                        const purchaseDateUnformatted = purchaseDateText.trim();
+                        purchaseDate = moment(purchaseDateUnformatted, DATE_FORMAT).format();
+                    }
+                }
+            }
+        }
+    }
+
     const marketInfo = $('div#conteudo > div.txtCenter');
     const marketName = marketInfo.find('div#u20').text();
     const marketTextWrapper = marketInfo.find('div.text');
@@ -202,7 +237,7 @@ const parserResultPage = async (content) => {
 
 
         if (marketCnpjWrapper.includes("CNPJ")) {
-            marketCNPJ = marketCnpjWrapper.substring(5);
+            marketCNPJ = marketCnpjWrapper.substring(5).trim();
         }
 
         const marketAddressWrapper = $(marketTextWrapper[1]).text().trim().split('\n').join('').split('\t').join('');
@@ -236,6 +271,7 @@ const parserResultPage = async (content) => {
         accessCode,
         products: productsArr,
         market: market,
+        purchaseDate,
     });
 
     const invoiceId = invoice._id;
@@ -249,7 +285,7 @@ const parserResultPage = async (content) => {
             price: prod.price,
             amount: prod.amount,
             marketName: marketName,
-            purchaseDate: new Date(),
+            purchaseDate,
         });
     });
 

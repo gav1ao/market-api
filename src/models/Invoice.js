@@ -62,7 +62,6 @@ const InvoiceSchema = new Schema({
     purchaseDate: {
         type: Date,
         required: true,
-        default: Date.now,
     }
 },
 {
