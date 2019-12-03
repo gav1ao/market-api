@@ -28,34 +28,51 @@ module.exports = {
     },
 
     async requestAccess(req, res) {
-        if (globalBrowser === undefined) {
-            globalBrowser = await puppeteer.launch({headless: false});
-            // globalBrowser = await puppeteer.launch();
+        if (!globalBrowser) {
+            openGlobalBrowser();
         }
 
-        const { accessCode } = req.body;
+        try {
+            const { accessCode } = req.body;
 
-        userPage = await globalBrowser.newPage();
+            userPage = await globalBrowser.newPage();
 
-        const response = await invoiceInfo.requestAccess(accessCode, userPage);
+            const response = await invoiceInfo.requestAccess(accessCode, userPage);
 
-        return res.send(response);
+            return res.status(200).send(response);
+
+        } catch (ex) {
+            return res.status(500).send({
+                "error": "There was a problem trying to request the invoice."
+            });
+        }
     },
 
     async getResultPage(req, res) {
-        if (globalBrowser === undefined) {
-            // TODO: Tratar erro de browser e páginas fechadas
-            console.error("Browser closed");
+        if (!globalBrowser) {
+            openGlobalBrowser();
         }
 
-        //TODO: Tratar caso em que recebe captcha errada
+        try {
+            //TODO: Tratar caso em que recebe captcha errada
+            const { accessCode, captchaCode } = req.body;
 
-        const { accesscode, captchacode } = req.headers;
+            const response = await invoiceInfo.getResultPage(accessCode, captchaCode, userPage);
 
+            if (response.error) {
+                return res.status(response.statusCode).send({ "error" : response.error});
+            }
 
-        const response = await invoiceInfo.getResultPage(accesscode, captchacode, userPage);
+            return res.status(200).send(response);
 
-        return res.send(response);
+        } catch (ex) {
+            // TODO: Utilizar ferramenta para coleta de erros
+            console.error(ex);
+
+            return res.status(500).send({
+                "error": "There was a problem trying to register the requested invoice."
+            });
+        }
     },
 
     async getResultWithQRCode(req, res) {

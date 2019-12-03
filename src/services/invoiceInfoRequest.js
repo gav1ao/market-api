@@ -28,22 +28,23 @@ const getRequestPage = async (accessCode, page) => {
     return reponseObject;
 }
 
-const goToResult = async (captchaCode, page) => {
-    const chaveAcesso = '3319 0907 4731 6000 0105 6500 6000 2395 6990 0479 1386';
+const goToResult = async (accessCode, captchaCode, page) => {
 
-    console.log(captchaCode);
+    try {
+        await page.type('#chaveAcesso', accessCode);
+        await page.type('#captcha', captchaCode);
 
-    await page.type('#chaveAcesso', chaveAcesso);
-    await page.type('#captcha', captchaCode);
+        await page.click('#consultar');
 
-    await page.click('#consultar');
+        await page.waitForNavigation();
+        
+        const content = await page.content();
 
-    await page.waitForNavigation();
-
-    console.log('New Page URL:', page.url());
-
-    // return page.content();
-    return {status: true};
+        return parserResultPage(content);
+        
+    } catch (ex) {
+        throw ex;
+    }
 }
 
 const requestAccess = (accessCode, page) => {
@@ -58,8 +59,8 @@ const requestAccess = (accessCode, page) => {
 const getResultPage = (accessCode, captchaCode, page) => {
     return new Promise( (resolve, reject) => {
 
-        goToResult(captchaCode, page).then((html) => {
-            resolve(html);
+        goToResult(accessCode, captchaCode, page).then((response) => {
+            resolve(response);
         })
         .catch((err) => {
             reject(err);
