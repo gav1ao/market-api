@@ -5,10 +5,18 @@ const invoiceInfo = require('../services/invoiceInfoRequest');
 let globalBrowser, userPage;
 
 const openGlobalBrowser = async () => {
-    globalBrowser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+    if (!globalBrowser) {
+        globalBrowser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+
+        console.log('Global browser is now opened.')
+    }
 }
 
 module.exports = {
+    async openGlobalBrowser() {
+        openGlobalBrowser();   
+    },
+
     async index(req, res) {
 
         const { user } = req.headers;
@@ -28,9 +36,7 @@ module.exports = {
     },
 
     async requestAccess(req, res) {
-        if (!globalBrowser) {
-            openGlobalBrowser();
-        }
+        openGlobalBrowser();
 
         try {
             const { accessCode } = req.body;
@@ -49,9 +55,7 @@ module.exports = {
     },
 
     async getResultPage(req, res) {
-        if (!globalBrowser) {
-            openGlobalBrowser();
-        }
+        openGlobalBrowser();
 
         try {
             //TODO: Tratar caso em que recebe captcha errada
@@ -76,9 +80,7 @@ module.exports = {
     },
 
     async getResultWithQRCode(req, res) {
-        if (!globalBrowser) {
-            openGlobalBrowser();
-        }
+        openGlobalBrowser();
 
         try {
             const { url } = req.headers;

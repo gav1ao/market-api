@@ -9,6 +9,9 @@ const Market = require('../models/Market');
 const NUMBER_PATTERN = /(\d)+(\,)*(\d)*/;
 const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 
+const INVOICE_NOT_FOUND_MSG = 'Documento fiscal eletrônico não encontrado. Documento emitido em contingência na modalidade offline. O contribuinte tem até o primeiro dia útil subsequente contado a partir de sua emissão para transmiti-lo.';
+const CAPTCHA_CODE_WRONG_MSG = 'Código de verificação incorreto.';
+
 const getRequestPage = async (accessCode, page) => {    
     const url = 'http://nfce.fazenda.rj.gov.br/consulta';
 
@@ -34,16 +37,27 @@ const goToResult = async (accessCode, captchaCode, page) => {
         await page.type('#chaveAcesso', accessCode);
         await page.type('#captcha', captchaCode);
 
-        await page.click('#consultar');
+        const [response] = await Promise.all([
+            page.waitForNavigation(),
+            page.click('#consultar')
+        ]);
 
-        await page.waitForNavigation();
-        
-        const content = await page.content();
+        const url = response.url();
+        const content = await response.buffer();
+
+        if ( url.includes('http://www4.fazenda.rj.gov.br/consultaDFe/paginas/consultaChaveAcesso.faces') ) {
+            console.log(content);
+
+            return verifyErrorRequestPage(content);
+        }
 
         return parserResultPage(content);
         
     } catch (ex) {
         throw ex;
+
+    } finally {
+        page.close();
     }
 }
 
@@ -123,6 +137,9 @@ const getResultPageWithQRCode = (url, page) => {
 
             } catch (ex) {
                 throw ex;
+
+            } finally {
+                page.close();
             }
         }
 
@@ -133,7 +150,39 @@ const getResultPageWithQRCode = (url, page) => {
             reject(err);
         });
     });
-}
+};
+
+const verifyErrorRequestPage = (content) => {
+    const $ = cherrio.load(content);
+
+    const msgForm = $('form#formulario').find('span.textoErro').text().trim();
+
+    if (msgForm) {
+        if (msgForm == CAPTCHA_CODE_WRONG_MSG) {
+            return {
+                "error" : "Wrong captcha code.",
+                "statusCode" : 400
+            }
+        }
+    }
+
+    const msgError = $('div.textoErro').find('span#erroSolicitacao').text().trim();
+
+    if (msgError) {
+        if (msgError == INVOICE_NOT_FOUND_MSG) {
+            return {
+                "error" : "Invoice not found.",
+                "statusCode" : 404
+            }
+        }
+
+    } else {
+        return {
+            "error" : "Internal Server Error.",
+            "statusCode" : 500
+        }
+    }
+};
 
 const parserResultPage = async (content) => {
     const $ = cherrio.load(content);

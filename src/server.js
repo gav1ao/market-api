@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const routes = require('./routes');
+const InvoiceController = require('./controllers/InvoiceController');
 
 const app = express();
 
@@ -23,4 +24,6 @@ app.set('port', port);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}.`);
+
+    InvoiceController.openGlobalBrowser();
 });
