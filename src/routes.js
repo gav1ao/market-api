@@ -5,6 +5,7 @@ const routes = express.Router();
 
 const InvoiceController = require('./controllers/InvoiceController');
 const ProductController = require('./controllers/ProductController');
+const MarketController = require('./controllers/MarketController');
 
 routes.get('/invoice/code/', InvoiceController.requestAccess);
 routes.post('/invoice/code/', InvoiceController.getResultPage);
@@ -17,6 +18,9 @@ routes.get('/admin/browser/status', InvoiceController.getBrowserStatus);
 
 routes.get('/product/', ProductController.index);
 routes.post('/product/', ProductController.getProductsByName);
+
+routes.get('/market/cities', MarketController.getMarketCities);
+routes.post('/market/names', MarketController.getMarketNameListByMunicipality);
 
 /*routes.post('/devs', DevController.store);
 routes.post('/devs/:devId/likes', LikeController.store);

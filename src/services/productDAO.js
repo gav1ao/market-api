@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const Invoice = require('../models/Invoice');
 const Product = require('../models/Product');
 
+const marketDAO = require('./marketDAO');
+
 const md5 = (string) => {
     return crypto.createHash('md5').update(string).digest('hex');
 }
@@ -31,42 +33,47 @@ const removeDuplicates = (products) => {
     return productsUnique;
 }
 
-const getProductsByName = async (productName) => {
-    // TODO: Tratar caso de supermercados homônimos
-    /*const products = await Product.aggregate([
-        { $match: {
-            $text: { $search: productName } }
-        },
-        { $sort:
-            {
-                price: 1,
-                purchaseDate: -1
-            }
-        },
-        { $group:
-            {
-                _id: "$name",
-                price: { $first: "$price" },
-                marketName: { $first: "$marketName"},
-                purchaseDate: {$first: "$purchaseDate"},
-            }
-        },
-        { $sort: { price: 1} }
-    ]);*/
+const getProductsByName = async (productName, option) => {
 
-    // TODO: Tratar caso de supermercados homônimos
-    const products = await Product.aggregate([
-        { $match: {
-            $text: { $search: productName } }
-        },
-        { $sort:
+    let products = [];
+    
+    if (option.address) {
+        const { municipality, state } = option.address;
+        const marketNamesList = await marketDAO.getMarketNameListByMunicipality(municipality, state);
+        const names = marketNamesList.map(n => n._id);
+
+        products = await Product.aggregate([
+            { $match: {
+                $text: { $search: productName } }
+            },
+            { $sort:
+                {
+                    name: 1,
+                    marketName: 1,
+                    purchaseDate: -1
+                }
+            },
             {
-                name: 1,
-                marketName: 1,
-                purchaseDate: -1
+                $match: { "marketName": {$in: names } }
             }
-        },
-    ]);
+        ]);
+    }
+
+    if (option.all) {
+         // TODO: Tratar caso de supermercados homônimos
+        products = await Product.aggregate([
+            { $match: {
+                $text: { $search: productName } }
+            },
+            { $sort:
+                {
+                    name: 1,
+                    marketName: 1,
+                    purchaseDate: -1
+                }
+            }
+        ]);
+    }
 
     const productsFiltered = removeDuplicates(products);
 
@@ -94,6 +101,6 @@ const getAllProducts = () => {
 }
 
 module.exports = {
-    getProductsByName: async (productName) => await getProductsByName(productName),
+    getProductsByName: async (productName, option) => await getProductsByName(productName, option),
     getAllProducts: () => getAllProducts()
 }

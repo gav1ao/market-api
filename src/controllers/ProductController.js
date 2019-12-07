@@ -7,9 +7,9 @@ module.exports = {
 
     async getProductsByName(req, res) {
 
-        const { productName } = req.body;
+        const { productName, option } = req.body;
 
-        const products = await invoiceDAO.getProductsByName(productName);
+        const products = await invoiceDAO.getProductsByName(productName, option);
 
         return res.json(products);
     }
