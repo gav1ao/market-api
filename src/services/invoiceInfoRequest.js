@@ -250,10 +250,10 @@ const parserResultPage = async (content) => {
                 const purchaseDateWrapper = $(infoInvoiceWrapper[0])
 
                 if (purchaseDateWrapper) {
-                    const purchaseDateTextWrapper = purchaseDateWrapper.text();
+                    const purchaseDateTextWrapper = purchaseDateWrapper.text().split('\n').join('').split('\t').join('');
 
                     const INITIAL_TEXT = 'Emissão: ';
-                    const FINAL_TEXT = ' - Via Consumidor';
+                    const FINAL_TEXT = '- Via Consumidor';
 
                     const INITIAL_INDEX = purchaseDateTextWrapper.indexOf(INITIAL_TEXT) + INITIAL_TEXT.length;
                     const FINAL_INDEX = purchaseDateTextWrapper.indexOf(FINAL_TEXT);
