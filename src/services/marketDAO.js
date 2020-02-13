@@ -45,8 +45,8 @@ const getMarketNameListByMunicipality = async (municipality, state) => {
     const markets = await Invoice.aggregate([
         {
             $match : {
-                'market.address.municipality' : municipality,
-                'market.address.state' : state,
+                'market.address.municipality' : new RegExp(["^", municipality, "$"].join(""), "i"),
+                'market.address.state' : new RegExp(["^", state, "$"].join(""), "i"),
             }
 
         },
