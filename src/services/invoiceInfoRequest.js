@@ -1,10 +1,8 @@
-const puppeteer = require('puppeteer');
 const cherrio = require('cheerio');
 const moment = require('moment');
 
 const Invoice = require('../models/Invoice');
 const Product = require('../models/Product');
-const Market = require('../models/Market');
 
 const NUMBER_PATTERN = /(\d)+(\,)*(\d)*/;
 const DATE_FORMAT = 'DD/MM/YYYY HH:mm:ss';

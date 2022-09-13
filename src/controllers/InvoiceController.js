@@ -6,7 +6,10 @@ let globalBrowser, userPage;
 
 const openGlobalBrowser = async () => {
     if (!globalBrowser) {
-        globalBrowser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+        globalBrowser = await puppeteer.launch({
+            executablePath: '/usr/bin/google-chrome',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
 
         console.log('Global browser is now opened.')
     }
